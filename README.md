@@ -53,8 +53,8 @@ python experiments/Benchmark/runner.py --task standard --steps 10 --rob_samples 
 ```
 
 ## ⚖️ License
-- **Code**: Apache License 2.0
-- **Datasets**: MIT License (See `datasets/LICENSE` or `README.md` in datasets folder)
+- **Code**: MIT Liscense
+- **Datasets**: MIT License
 
 ## 📧 Contact
 If you have any questions or need further assistance, please don't hesitate to contact us.
@@ -121,8 +121,8 @@ python experiments/Benchmark/runner.py --task standard --steps 10 --rob_samples 
 ```
 
 ## ⚖️ ライセンス
-- **コード**: Apache License 2.0
-- **データセット**: MIT License (datasetsフォルダ内のLICENSEまたはREADME.mdを参照)
+- **コード**: MIT Liscence
+- **データセット**: MIT License
 
 ## 📧 お問い合わせ
 ご質問やご不明な点等ございましたら、お気軽にお問い合わせください。
