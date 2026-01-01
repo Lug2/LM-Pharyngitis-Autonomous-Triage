@@ -5,7 +5,7 @@ The system combines deep learning (YOLOv8) for image analysis with a causal Baye
 
 ## 🚀 Quick Start (Google Colab)
 You can run the demonstration directly in Google Colab:
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YourUsername/Neuro-Symbolic-Pharyngitis-Triage/blob/main/colab_demo.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Lug2/Neuro-Symbolic-Pharyngitis-Triage/blob/main/colab_demo.ipynb)
 
 ## 📂 Repository Structure
 - `datasets/`: Annotated pharynx image dataset (MIT License).
@@ -70,7 +70,7 @@ If you have any questions or need further assistance, please don't hesitate to c
 
 ## 🚀 クイックスタート (Google Colab)
 以下のリンクから、ブラウザ上でデモを実行できます。
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YourUsername/Neuro-Symbolic-Pharyngitis-Triage/blob/main/colab_demo.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Lug2/Neuro-Symbolic-Pharyngitis-Triage/blob/main/colab_demo.ipynb)
 
 ## 📂 フォルダ構成
 - `datasets/`: 咽頭画像データセット (MITライセンス).
