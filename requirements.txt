@@ -11,3 +11,4 @@ tqdm>=4.65.0
 networkx>=3.0
 scipy>=1.10.0
 ipykernel
+pgmpy>=0.1.20
