@@ -58,7 +58,8 @@ python experiments/Benchmark/runner.py --task standard --steps 10 --rob_samples 
 
 ## 📧 Contact
 If you have any questions or need further assistance, please don't hesitate to contact us.
-- **First Author / Developer**: a7213738@gmail.com
+- **First Author / Developer, Leon Moriguchi**: a7213738@gmail.com
+If you want to reach the corresponding author, please refer to the paper.
 (You can also create an Issue in this repository)
 
 ---
