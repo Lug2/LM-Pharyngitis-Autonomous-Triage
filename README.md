@@ -70,7 +70,7 @@ If you have any questions or need further assistance, please don't hesitate to c
 
 ## 🚀 クイックスタート (Google Colab)
 以下のリンクから、ブラウザ上でデモを実行できます。
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Lug2/LM-Pharyngitis-Autonomous-Triage/blob/main/colab_demo.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Lug2/LM-Pharyngitis-Autonomous-Triage/blob/main/colab_demo.ipynb).
 
 ## 📂 フォルダ構成
 - `datasets/`: 咽頭画像データセット (MITライセンス).
