@@ -1,0 +1,618 @@
+# Update Date: 2025-12-22
+#
+# Documentation of Reference Sources:
+# Shaikh N et al. "Accuracy and Precision of the Signs and Symptoms of Streptococcal Pharyngitis in Children", J Pediatr 2012.
+# Fine AM et al. "Large-Scale Validation of the Centor and McIsaac Scores", Arch Intern Med 2012.
+# Ebell MH et al. "Does This Patient Have Strep Throat?", JAMA 2000.
+# Centor RM et al. Ann Intern Med 2015.
+# Ebell MH et al. JAMA 2016.
+
+
+thresholds:
+  tau_silent: 0.419       # Cognitive Conflict Threshold for Silent Danger (Calibrated-p90)
+  tau_over: 0.487          # Threshold for Over-Anxious / Over-Reporting(Calibrated-95th percentile (p95))
+  gas_alert: 0.70         # Probability line for confirmed GAS diagnosis
+  pediatric_gas_threshold: 0.50 # AADT: Lower threshold for children due to atypical presentation
+  fuso_alert: 0.05        # Warning line for lethal Fuso risk
+  silent_prob_limit: 0.6  # Objective probability requirement for Silent Danger
+
+nodes:
+  # --- Context ---
+  - name: Age_Group
+    states: [Child, YoungAdult, Adult, Senior]
+    description: "Patient age category"
+    meta:
+      name_jp: "Age Group"
+      states:
+        Child:
+          label: "Child (3-14y)"
+          supports: {GAS: High, Adeno: Medium}
+        YoungAdult:
+          label: "Young Adult (15-30y)"
+          supports: {Fuso: High, EBV: Medium} # Robert2015: Fuso is dominant in this age
+        Adult:
+          label: "Adult (31-64y)"
+          supports: {Flu: Medium, Other_Viral: High}
+        Senior:
+          label: "Senior (65y+)"
+          supports: {Flu: High}
+
+  - name: C_epidemic
+    states: [None, Flu_Warning, GAS_Warning]
+    description: "Surrounding infection status"
+    meta:
+      name_jp: "Epidemic Status"
+      states:
+        None: {label: "None", supports: {}}
+        Flu_Warning: {label: "Flu Outbreak", supports: {Flu: High}}
+        GAS_Warning: {label: "GAS Outbreak", supports: {GAS: High}}
+
+  # --- Pathogens ---
+  - name: GAS
+    states: [False, True]
+    description: "Group A Streptococcus"
+    meta:
+      name_jp: "Group A Strep"
+      states: {False: {label: "Negative"}, True: {label: "Positive"}}
+  
+  - name: EBV
+    states: [False, True]
+    description: "Epstein-Barr Virus"
+    meta:
+      name_jp: "EB Virus"
+      states: {False: {label: "Negative"}, True: {label: "Positive"}}
+  
+  - name: Fuso
+    states: [False, True]
+    description: "Fusobacterium necrophorum"
+    meta:
+      name_jp: "Fusobacterium"
+      states: {False: {label: "Negative"}, True: {label: "Positive"}}
+
+  - name: Flu
+    states: [False, True]
+    description: "Influenza"
+    meta:
+      name_jp: "Influenza"
+      states: {False: {label: "Negative"}, True: {label: "Positive"}}
+
+  - name: Adeno
+    states: [False, True]
+    description: "Adenovirus"
+    meta:
+      name_jp: "Adenovirus"
+      states: {False: {label: "Negative"}, True: {label: "Positive"}}
+
+  - name: Other_Viral
+    states: [False, True]
+    description: "Other Viral Pharyngitis"
+    meta:
+      name_jp: "Common Cold"
+      states: {False: {label: "Negative"}, True: {label: "Positive"}}
+
+  # --- Pathophysiology ---
+  - name: Inflam
+    states: [False, True]
+    description: "General Inflammation Status"
+  
+  - name: Exudate_Gen
+    states: [False, True]
+    description: "Exudate Generation Process"
+
+  # --- Clinical Signs ---
+  
+  - name: C_temp
+    states: [Normal, Mild, High] # <37.0, 37-38, >38
+    description: "Fever"
+    meta:
+      name_jp: "Temperature"
+      modality: "objective" # V6 Cognitive Triage
+      states:
+        Normal: {label: "Normal", supports: {}}
+        Mild: {label: "Mild Fever", supports: {Other_Viral: High, EBV: Medium}}
+        High: {label: "High Fever (>38C)", supports: {Flu: High, GAS: High, Fuso: Medium}}
+
+  - name: C_cough
+    states: [Absent, Present]
+    description: "Clinical: Cough"
+    meta:
+      name_jp: "Cough"
+      modality: "objective" # Observable
+      states:
+        Absent: {label: "Absent", supports: {GAS: High, Fuso: High, EBV: Medium}}
+        Present: {label: "Present", supports: {Flu: High, Adeno: High, Other_Viral: High}}
+
+  - name: C_lymph
+    states: [Normal, Anterior, Posterior, Both]
+    description: "Lymph Node Swelling"
+    meta:
+      name_jp: "Lymph Nodes"
+      modality: "objective" # Palpation
+      states:
+        Normal: {label: "Normal", supports: {}}
+        Anterior: {label: "Anterior Cervical", supports: {GAS: High, Fuso: High}}
+        Posterior: {label: "Posterior Cervical", supports: {EBV: High}}
+        Both: {label: "Bilateral/Diffused", supports: {EBV: Medium, GAS: Medium}}
+
+  - name: C_fatigue
+    states: [Absent, Present]
+    description: "General Malaise / Fatigue"
+    meta:
+      name_jp: "Fatigue"
+      modality: "subjective" # V6 Subjective Stream
+      states:
+        Absent: {label: "Absent", supports: {GAS: Medium}}
+        Present: {label: "Present", supports: {EBV: High, Flu: High}}
+
+  - name: C_rash
+    states: [Absent, Present]
+    description: "Scarlatiniform Rash"
+    meta:
+      name_jp: "Skin Rash"
+      modality: "objective"
+      states:
+        Absent: {label: "Absent", supports: {}}
+        Present: {label: "Present", supports: {GAS: High, EBV: Low}}
+
+  - name: V_vessel
+    states: [Normal, Prominent]
+    description: "Visual: Petechiae"
+    meta: 
+      name_jp: "Petechiae"
+      modality: "objective"
+      states:
+        Normal: {label: "Normal", supports: {}}
+        Prominent: {label: "Present", supports: {GAS: High, EBV: High}}
+
+  # --- Other Clinical Nodes ---
+  - name: C_joint
+    states: [None, Severe]
+    meta: 
+      name_jp: "Joint Pain"
+      modality: "subjective"
+      states: {None: {label: "None"}, Severe: {label: "Severe"}}
+  - name: C_duration
+    states: [Acute, Subacute]
+    meta: 
+      name_jp: "Duration"
+      modality: "context"
+      states: {Acute: {label: "<3 Days"}, Subacute: {label: ">=4 Days"}}
+  - name: C_pain_sev
+    states: [Mild, Severe]
+    meta: 
+      name_jp: "Pain Severity"
+      modality: "subjective"
+      states: {Mild: {label: "Mild"}, Severe: {label: "Severe"}}
+  - name: C_eye
+    states: [Normal, Conjunctivitis]
+    meta: 
+      name_jp: "Eye Symptoms"
+      modality: "objective"
+      states: {Normal: {label: "Normal"}, Conjunctivitis: {label: "Conjunctivitis"}}
+  - name: V_white
+    states: [None, Low, High]
+    meta: 
+      name_jp: "White Coating"
+      modality: "objective"
+      states: {None: {label: "None"}, Low: {label: "Low"}, High: {label: "High"}}
+  - name: V_color
+    states: [Normal, Red, DarkRed]
+    meta: 
+      name_jp: "Redness"
+      modality: "objective"
+      states: {Normal: {label: "Normal"}, Red: {label: "Red"}, DarkRed: {label: "Dark Red"}}
+  - name: C_pain_lat
+    states: [Bilateral, Unilateral]
+    meta: 
+      name_jp: "Pain Laterality"
+      modality: "subjective"
+      states: {Bilateral: {label: "Bilateral"}, Unilateral: {label: "Unilateral"}}
+  - name: C_onset
+    states: [Sudden, Gradual]
+    meta: 
+      name_jp: "Onset Mode"
+      modality: "subjective"
+      states: {Sudden: {label: "Sudden"}, Gradual: {label: "Gradual"}}
+
+edges:
+  # Priors
+  - {parent: Age_Group, child: GAS}
+  - {parent: Age_Group, child: EBV}
+  - {parent: Age_Group, child: Fuso}
+  - {parent: Age_Group, child: Flu}
+  - {parent: Age_Group, child: Adeno}
+  - {parent: Age_Group, child: Other_Viral}
+  
+  - {parent: C_epidemic, child: Flu}
+  - {parent: C_epidemic, child: GAS}
+
+  # Pathogens -> Symptoms
+  - {parent: GAS, child: Inflam}
+  - {parent: GAS, child: Exudate_Gen}
+  - {parent: GAS, child: C_rash}
+  - {parent: GAS, child: C_temp}
+  - {parent: GAS, child: C_cough}
+  - {parent: GAS, child: C_lymph}
+  - {parent: GAS, child: V_vessel}
+  - {parent: GAS, child: C_pain_sev}
+  - {parent: GAS, child: C_duration}
+  - {parent: GAS, child: C_onset}
+  - {parent: GAS, child: C_fatigue} # Added
+
+  - {parent: EBV, child: Inflam}
+  - {parent: EBV, child: Exudate_Gen}
+  - {parent: EBV, child: C_temp}
+  - {parent: EBV, child: C_lymph}
+  - {parent: EBV, child: V_vessel}
+  - {parent: EBV, child: C_duration}
+  - {parent: EBV, child: C_pain_sev}
+  - {parent: EBV, child: C_onset}
+  - {parent: EBV, child: C_rash}
+  - {parent: EBV, child: C_fatigue} # Added (Mark2016)
+
+  - {parent: Flu, child: Inflam}
+  - {parent: Flu, child: Exudate_Gen}
+  - {parent: Flu, child: C_temp}
+  - {parent: Flu, child: C_cough}
+  - {parent: Flu, child: C_joint}
+  - {parent: Flu, child: C_onset}
+  - {parent: Flu, child: C_duration}
+  - {parent: Flu, child: C_fatigue} # Added
+
+  - {parent: Adeno, child: Inflam}
+  - {parent: Adeno, child: Exudate_Gen}
+  - {parent: Adeno, child: C_temp}
+  - {parent: Adeno, child: C_cough}
+  - {parent: Adeno, child: C_eye}
+  - {parent: Adeno, child: C_duration}
+
+  - {parent: Fuso, child: Inflam}
+  - {parent: Fuso, child: Exudate_Gen}
+  - {parent: Fuso, child: C_pain_lat}
+  - {parent: Fuso, child: C_onset}
+  - {parent: Fuso, child: C_pain_sev}
+  - {parent: Fuso, child: C_temp}  # Added explicit link for control (Robert2015)
+  - {parent: Fuso, child: C_cough} # Added explicit link (Robert2015)
+  - {parent: Fuso, child: C_lymph} # Added explicit link (Robert2015)
+
+  - {parent: Other_Viral, child: Inflam}
+  - {parent: Other_Viral, child: Exudate_Gen}
+  - {parent: Other_Viral, child: C_temp}
+  - {parent: Other_Viral, child: C_cough}
+  - {parent: Other_Viral, child: C_pain_sev}
+  - {parent: Other_Viral, child: C_onset}
+  - {parent: Other_Viral, child: C_fatigue} # Added
+
+  # Pathophysiology -> Observables
+  - {parent: Exudate_Gen, child: V_white}
+  - {parent: Inflam, child: V_color}
+  - {parent: Inflam, child: C_temp} 
+  - {parent: Inflam, child: C_pain_sev}
+  - {parent: Inflam, child: C_lymph} 
+  - {parent: Inflam, child: V_vessel}
+  - {parent: Inflam, child: C_pain_lat}
+
+cpts:
+  # --- Layer 1: Priors ---
+  - node: Age_Group
+    type: root
+    probs: 
+      Child: 0.25
+      YoungAdult: 0.25
+      Adult: 0.25
+      Senior: 0.25
+
+  - node: C_epidemic
+    type: root
+    probs: 
+      None: 0.80
+      Flu_Warning: 0.10
+      GAS_Warning: 0.10
+
+  # GAS Prior
+  # [Robert2015]: YoungAdults Prevalence 10.3%
+  - node: GAS
+    parents: [Age_Group, C_epidemic]
+    type: conditional
+    rules:
+      - if: {C_epidemic: GAS_Warning}
+        probs: {True: 0.60, False: 0.40}
+      - if: {Age_Group: Child}
+        probs: {True: 0.35, False: 0.65}
+      - if: {Age_Group: YoungAdult}
+        # Robert2015 Table 2: 10.3%
+        probs: {True: 0.10, False: 0.90}
+      - default:
+        probs: {True: 0.05, False: 0.95}
+
+  # Fuso Prior
+  # [Robert2015]: YoungAdults Prevalence 20.5% (Highest!)
+  - node: Fuso
+    parents: [Age_Group]
+    type: conditional
+    rules:
+      - if: {Age_Group: YoungAdult}
+        # Major Update: 1% -> 20%
+        probs: {True: 0.20, False: 0.80}
+      - default:
+        # Rare in other ages
+        probs: {True: 0.005, False: 0.995}
+
+  # EBV Prior
+  # [Mark2016]: 16-20y sore throat ~7.9% prevalence
+  - node: EBV
+    parents: [Age_Group]
+    type: conditional
+    rules:
+      - if: {Age_Group: YoungAdult}
+        # Adjusted from 20% down to 8% to match Mark2016/Aust study
+        probs: {True: 0.08, False: 0.92}
+      - default:
+        probs: {True: 0.02, False: 0.98}
+  
+  - node: Flu
+    parents: [Age_Group, C_epidemic]
+    type: conditional
+    rules:
+      - if: {C_epidemic: Flu_Warning}
+        probs: {True: 0.60, False: 0.40}
+      - default:
+        probs: {True: 0.10, False: 0.90}
+  
+  - node: Adeno
+    parents: [Age_Group]
+    type: conditional
+    rules:
+      - if: {Age_Group: Child}
+        probs: {True: 0.15, False: 0.85}
+      - default:
+        probs: {True: 0.05, False: 0.95}
+
+  - node: Other_Viral
+    parents: [Age_Group]
+    type: conditional
+    rules:
+      - default:
+        probs: {True: 0.50, False: 0.50}
+
+  # --- Layer 3: Symptoms & Signs (Calibrated) ---
+
+  # Exudate_Gen
+  # [Robert2015 Table 4]: Fuso 34%, GAS 37% -> Very similar
+  - node: Exudate_Gen
+    parents: [GAS, EBV, Fuso, Flu, Adeno, Other_Viral]
+    type: conditional
+    rules:
+      - if: {GAS: True}
+        probs: {True: 0.40, False: 0.60}
+      - if: {Fuso: True}
+        # Matches GAS closely (34%)
+        probs: {True: 0.35, False: 0.65}
+      - if: {EBV: True}
+        # EBV is often more exudative
+        probs: {True: 0.35, False: 0.65}
+      - if: {Adeno: True}
+        probs: {True: 0.50, False: 0.50}
+      - if: {Flu: True}
+        probs: {True: 0.05, False: 0.95}
+      - if: {Other_Viral: True}
+        probs: {True: 0.15, False: 0.85} 
+      - default:
+        probs: {True: 0.01, False: 0.99}
+
+  # C_temp (Fever)
+  # [Robert2015 Table 4]: Fuso Fever 38% vs GAS 47%
+  - node: C_temp
+    parents: [GAS, EBV, Flu, Adeno, Other_Viral, Fuso, Inflam] 
+    type: conditional
+    rules:
+      - if: {Flu: True}
+        probs: {Normal: 0.05, Mild: 0.10, High: 0.85}
+      - if: {GAS: True}
+        probs: {Normal: 0.20, Mild: 0.20, High: 0.60}
+      - if: {Fuso: True}
+        # Slightly less than GAS (38% had history of fever)
+        probs: {Normal: 0.40, Mild: 0.25, High: 0.35}
+      - if: {Adeno: True}
+        probs: {Normal: 0.20, Mild: 0.30, High: 0.50}
+      - if: {EBV: True}
+        probs: {Normal: 0.30, Mild: 0.40, High: 0.30}
+      - if: {Other_Viral: True}
+        probs: {Normal: 0.40, Mild: 0.50, High: 0.10}
+      - if: {Inflam: True}
+        probs: {Normal: 0.30, Mild: 0.60, High: 0.10}
+      - default:
+        probs: {Normal: 0.95, Mild: 0.04, High: 0.01}
+
+  # C_cough
+  # [Robert2015 Table 4]: "Lack of cough" Fuso 62% vs GAS 63% -> Identical
+  - node: C_cough
+    parents: [Flu, Adeno, Other_Viral, GAS, Fuso]
+    type: conditional
+    rules:
+      - if: {Flu: True}
+        probs: {Absent: 0.10, Present: 0.90}
+      - if: {Adeno: True}
+        probs: {Absent: 0.20, Present: 0.80}
+      - if: {Other_Viral: True}
+        probs: {Absent: 0.30, Present: 0.70}
+      - if: {GAS: True}
+        probs: {Absent: 0.70, Present: 0.30}
+      - if: {Fuso: True}
+        # Matches GAS
+        probs: {Absent: 0.65, Present: 0.35}
+      - default:
+        probs: {Absent: 0.50, Present: 0.50}
+
+  # V_vessel (Palatine Petechiae)
+  # [Mark2016]: Spec 0.95, LR+ 5.3 for Mono. Highly specific.
+  - node: V_vessel
+    parents: [GAS, EBV, Inflam]
+    type: conditional
+    rules:
+      - if: {EBV: True}
+        # LR+ 5.3 implies Prob(Petechiae|EBV) / Prob(Petechiae|NotEBV) = 5.3
+        # If Prob(NotEBV) ~ 0.05, then Prob(EBV) ~ 0.26
+        probs: {Normal: 0.74, Prominent: 0.26}
+      - if: {GAS: True}
+        # Less frequent than EBV
+        probs: {Normal: 0.85, Prominent: 0.15}
+      - default:
+        # High specificity
+        probs: {Normal: 0.95, Prominent: 0.05}
+
+  # C_lymph (Lymph Nodes)
+  # [Robert2015 Table 4]: Fuso Anterior 66%, GAS 71% (Both anterior dominant)
+  # [Mark2016]: Posterior Cervical LR+ 3.1 for EBV
+  - node: C_lymph
+    parents: [GAS, EBV, Fuso, Inflam]
+    type: conditional
+    rules:
+      - if: {GAS: True, EBV: True}
+        probs: {Normal: 0.05, Anterior: 0.20, Posterior: 0.20, Both: 0.55}
+      - if: {GAS: True}
+        probs: {Normal: 0.30, Anterior: 0.65, Posterior: 0.02, Both: 0.03}
+      - if: {Fuso: True}
+        # Matches GAS (Anterior dominant)
+        probs: {Normal: 0.35, Anterior: 0.60, Posterior: 0.02, Both: 0.03}
+      - if: {EBV: True}
+        # Posterior dominance
+        probs: {Normal: 0.20, Anterior: 0.10, Posterior: 0.50, Both: 0.20}
+      - if: {Inflam: True}
+        probs: {Normal: 0.80, Anterior: 0.15, Posterior: 0.04, Both: 0.01}
+      - default:
+        probs: {Normal: 0.98, Anterior: 0.02, Posterior: 0.00, Both: 0.00}
+
+  # C_rash
+  # [Mark2016]: Rash in Mono ~11%, but rises with antibiotics (not modeled here directly)
+  - node: C_rash
+    parents: [GAS, EBV]
+    type: conditional
+    rules:
+      - if: {GAS: True}
+        probs: {Absent: 0.85, Present: 0.15}
+      - if: {EBV: True}
+        probs: {Absent: 0.95, Present: 0.05}
+      - default:
+        probs: {Absent: 0.98, Present: 0.02}
+
+  # C_fatigue (NEW)
+  # [Mark2016 Table 2]: Malaise/Fatigue Sens 0.83 (High for EBV)
+  - node: C_fatigue
+    parents: [EBV, Flu, Other_Viral, GAS]
+    type: conditional
+    rules:
+      - if: {EBV: True}
+        # Very High Sensitivity
+        probs: {Absent: 0.15, Present: 0.85}
+      - if: {Flu: True}
+        probs: {Absent: 0.10, Present: 0.90}
+      - if: {Other_Viral: True}
+        probs: {Absent: 0.40, Present: 0.60}
+      - if: {GAS: True}
+        # Fatigue exists but sore throat is primary. Lower than EBV.
+        probs: {Absent: 0.50, Present: 0.50}
+      - default:
+        probs: {Absent: 0.80, Present: 0.20}
+
+  # --- Legacy / Generic Nodes ---
+  - node: Inflam
+    parents: [GAS, EBV, Fuso, Flu, Adeno, Other_Viral]
+    type: conditional
+    rules:
+      - if: {GAS: False, EBV: False, Fuso: False, Flu: False, Adeno: False, Other_Viral: False}
+        probs: {True: 0.01, False: 0.99}
+      - default:
+        probs: {True: 0.95, False: 0.05}
+
+  - node: V_white
+    parents: [Exudate_Gen]
+    type: conditional
+    rules:
+      - if: {Exudate_Gen: True}
+        probs: {None: 0.10, Low: 0.30, High: 0.60}
+      - default:
+        probs: {None: 0.95, Low: 0.04, High: 0.01}
+
+  - node: V_color
+    parents: [Inflam]
+    type: conditional
+    rules:
+      - if: {Inflam: True}
+        probs: {Normal: 0.05, Red: 0.45, DarkRed: 0.50}
+      - default:
+        probs: {Normal: 0.95, Red: 0.04, DarkRed: 0.01}
+
+  - node: C_joint
+    parents: [Flu]
+    type: conditional
+    rules:
+      - if: {Flu: True}
+        probs: {None: 0.10, Severe: 0.90}
+      - default:
+        probs: {None: 0.95, Severe: 0.05}
+
+  - node: C_duration
+    parents: [GAS, Flu, Adeno, EBV]
+    type: conditional
+    rules:
+      - if: {GAS: True}
+        probs: {Acute: 0.90, Subacute: 0.10}
+      - if: {Flu: True}
+        probs: {Acute: 0.95, Subacute: 0.05}
+      - if: {Adeno: True}
+        probs: {Acute: 0.80, Subacute: 0.20}
+      - if: {EBV: True}
+        probs: {Acute: 0.20, Subacute: 0.80}
+      - default:
+        probs: {Acute: 0.70, Subacute: 0.30}
+
+  - node: C_pain_sev
+    parents: [GAS, EBV, Fuso, Other_Viral, Inflam]
+    type: conditional
+    rules:
+      - if: {GAS: True}
+        probs: {Mild: 0.10, Severe: 0.90}
+      - if: {Fuso: True}
+        probs: {Mild: 0.10, Severe: 0.90}
+      - if: {EBV: True}
+        probs: {Mild: 0.20, Severe: 0.80}
+      - if: {Other_Viral: True}
+        probs: {Mild: 0.90, Severe: 0.10}
+      - default:
+        probs: {Mild: 0.60, Severe: 0.40}
+
+  - node: C_eye
+    parents: [Adeno]
+    type: conditional
+    rules:
+      - if: {Adeno: True}
+        probs: {Normal: 0.60, Conjunctivitis: 0.40}
+      - default:
+        probs: {Normal: 0.99, Conjunctivitis: 0.01}
+
+  - node: C_onset
+    parents: [GAS, Fuso, Flu, EBV, Other_Viral]
+    type: conditional
+    rules:
+      - if: {GAS: True}
+        probs: {Sudden: 0.90, Gradual: 0.10}
+      - if: {Fuso: True}
+        probs: {Sudden: 0.85, Gradual: 0.15}
+      - if: {Flu: True}
+        probs: {Sudden: 0.95, Gradual: 0.05}
+      - if: {EBV: True}
+        probs: {Sudden: 0.10, Gradual: 0.90}
+      - if: {Other_Viral: True}
+        probs: {Sudden: 0.30, Gradual: 0.70}
+      - default:
+        probs: {Sudden: 0.50, Gradual: 0.50}
+
+  - node: C_pain_lat
+    parents: [Fuso, Inflam]
+    type: conditional
+    rules:
+      - if: {Fuso: True}
+        probs: {Bilateral: 0.30, Unilateral: 0.70}
+      - default:
+        probs: {Bilateral: 0.99, Unilateral: 0.01}

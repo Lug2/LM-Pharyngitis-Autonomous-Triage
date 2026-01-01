@@ -1,0 +1,17 @@
+
+dca_analysis:
+  # Input file will now be dynamic usually, but default provided
+  input_file: "../../Benchmark_Stress/comprehensive_results.csv" 
+  # Note: The Runner will override this to point to the current run's stress output if available.
+  
+  input_filter:
+    scenario_id: "Baseline"
+  
+  output_file: "dca_results.csv"
+  
+  thresholds:
+    start: 0.01
+    end: 1.00
+    step: 0.01
+    
+  key_thresholds: [0.10, 0.20, 0.30]

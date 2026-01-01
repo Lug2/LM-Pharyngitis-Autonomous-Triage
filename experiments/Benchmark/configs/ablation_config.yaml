@@ -1,0 +1,43 @@
+
+ablation_study:
+  output_file: 'ablation_results.csv'
+  paths:
+    model_config: "../../inference_model/model_config.yaml"
+
+  # Test Scenarios
+  scenarios:
+    # Scenario A: Carrier (Viral infection in a GAS carrier)
+    carrier_cases:
+      id_prefix: 'Carrier'
+      n_samples: 50
+      scenario_id: 'A_Carrier'
+      ground_truth: 'Viral'
+      evidence:
+        Age_Group: 'Child'
+        C_epidemic: 'GAS_Warning'
+        C_temp: 'High'
+        C_cough: 'Present'
+        C_eye: 'Normal'
+        V_white: 'High'
+        V_color: 'DarkRed'
+        V_vessel: 'Prominent'
+        C_lymph: 'Anterior'
+        C_onset: 'Gradual'
+        C_pain_sev: 'Mild'
+
+    # Scenario B: NSAIDs Masking (True GAS with masked fever/pain)
+    nsaid_cases:
+      id_prefix: 'NSAID'
+      n_samples: 50
+      scenario_id: 'B_NSAID'
+      ground_truth: 'GAS'
+      evidence:
+        Age_Group: 'Child'
+        C_epidemic: 'None'
+        C_temp: 'Normal'      # MASKED
+        C_pain_sev: 'Mild'    # MASKED
+        C_cough: 'Absent'
+        V_white: 'High'
+        V_color: 'DarkRed'
+        V_vessel: 'Prominent'
+        C_lymph: 'Anterior'

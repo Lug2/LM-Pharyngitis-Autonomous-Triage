@@ -1,0 +1,70 @@
+
+stress_testing:
+  # Simulation Parameters
+  n_samples: 10000
+  
+  # Scenarios
+  # Scenario B: Hidden Confounder (NSAIDs)
+  nsaid_masking_rate: 0.20
+  
+  # Scenario C: Observation Bias
+  bias_miss_rate: 0.50
+  
+  # Base Viral Probability (when calculating Viral symptoms)
+  base_viral_prob: 0.10
+  
+  # Prevalence Settings for Scenario D
+  prevalence_levels:
+    summer: 0.05
+    normal: 0.15
+    winter: 0.30
+    outbreak: 0.50
+
+  # Ground Truth Sensitivities (for Patient Generation in simple mode - though we move to Causal Gen)
+  # Keeping these for reference or legacy support if we need to map configs.
+  # But we will rely on Causal Gen primarily.
+  sensitivities:
+    V_white: 
+      target: 'High'
+      prob: 0.38
+      default: 'None'
+      node: 'V_white'
+    C_lymph: 
+      target: 'Anterior'
+      prob: 0.40
+      default: 'Normal'
+      node: 'C_lymph'
+    V_vessel: 
+      target: 'Prominent'
+      prob: 0.15
+      default: 'Normal'
+      node: 'V_vessel'
+    C_rash: 
+      target: 'Present'
+      prob: 0.08
+      default: 'Absent'
+      node: 'C_rash'
+    C_temp: 
+      target: 'High'
+      prob: 0.53
+      default: 'Mild'
+      node: 'C_temp'
+    C_cough: 
+      target: 'Absent'
+      prob: 0.70
+      default: 'Present'
+      node: 'C_cough'
+    C_pain_sev: 
+      target: 'Severe'
+      prob: 0.90
+      default: 'Mild'
+      node: 'C_pain_sev'
+    
+  # Fixed Context
+  fixed_context:
+    Age_Group: 'Child'
+
+paths:
+  model_config: "../../inference_model/model_config.yaml"
+  output_results: "stress_comprehensive_results.csv"
+  output_metrics: "stress_summary_metrics.csv"

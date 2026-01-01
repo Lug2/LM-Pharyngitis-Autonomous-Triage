@@ -1,0 +1,93 @@
+# 臨床AI診断モデル 統合ベンチマークシステム論理仕様書 (Rev.4)
+
+本ドキュメントは、本研究で使用する「統合ベンチマークシステム (Unified Benchmark Suite)」の実験デザイン、データ生成ロジック、および評価指標の完全な定義書である。
+Tucker et al. (2020) の提唱する「高忠実度合成データ」および「構造的ストレステスト」の要件に準拠している。
+
+**Rev.4 更新履歴**:
+1. サンプルサイズを $N=10,000$ に拡張し、統計的検出力を向上。
+2. **CNN (統計的機械学習) との比較実験** を追加。
+3. **Breaking Point Analysis (構造的堅牢性評価)** を正式採用。
+4. **Pediatric Mode (小児用適応閾値)** のロジックを明記。
+
+---
+
+## 1. 合成データ生成と忠実度検証 (Synthetic Data Generation & Fidelity)
+
+### 1.1 因果モデルに基づくデータ生成
+Bayesian Network (Causal DAG) に基づき、モンテカルロシミュレーションを用いて仮想患者データ ($N=10,000$) を生成する。
+- **DAG構造**: `Common/model_config.yaml` で定義された構造に従う。
+- **条件付き確率 (CPT)**: 専門医の知識及び文献値に基づき設定された確率表を使用。
+- **Leakage Model**: 保菌者 (Carrier) において、確率 $\alpha_{leak}=0.15$ でGAS特有の症状が一部発現する複雑な病態をシミュレートする。
+
+### 1.2 忠実度検証 (Fidelity Validation)
+シミュレーションの妥当性を保証するため、実験実行時に以下の統計的検定を自動実行する。
+- **Kullback-Leibler (KL) Divergence**: 生成分布と理論分布の乖離を確認 ($D_{KL} < 0.05$ で合格)。
+- **Chi-Squared Test**: カテゴリカル変数の頻度分布適合度検定 ($p > 0.05$ で合格)。
+
+---
+
+## 2. 観測劣化モデル (MNAR Observation Model)
+
+実臨床の不確実性を再現するため、**MNAR (Missing Not At Random)** メカニズムを採用。
+環境変数 $L_{env}$ (診察環境の質) が低下すると、視覚的に微細な所見 (例: リンパ節腫脹) が選択的に欠損するモデルを実装。
+
+---
+
+## 3. ストレステストシナリオ (Stress Scenarios)
+
+AIモデルの堅牢性を多角的に評価するため、以下の構造的介入を行う。
+
+### Scenario A: Baseline
+- 標準的なノイズ環境下での性能評価 (基準)。
+
+### Scenario B: Hidden Confounder (NSAIDs Masking)
+- **概念**: 解熱鎮痛剤の使用により、主要症状（発熱、疼痛）が隠蔽される。
+- **目的**: 症状の一部が欠落しても、他の因果関係（白苔など）から正しい推論ができるか検証。
+
+### Scenario C: Systematic Observation Bias
+- **概念**: 経験不足により、特定の重要所見（白苔）が体系的に見落とされる状況。
+
+### Scenario D: Out-of-Distribution (Prevalence Drift)
+- **概念**: 学習時（有病率 30%）とは異なる有病率環境（5%〜50%）での性能変化。
+
+### Scenario E: Breaking Point Analysis (Structural Robustness)
+- **概念**: 「Brain Damage Test」。モデルの内部パラメータ（確率値）に対し、0%〜100%のランダムノイズを注入する。
+- **目的**: パラメータが完全に破壊されても診断能力が維持されるか（＝数値調整ではなく因果構造グラフの正しさに依存しているか）を証明する。
+- **合格基準**: ノイズ100%環境下でも AUC > 0.80 を維持すること。
+
+---
+
+## 4. 比較実験: Causal AI vs CNN Baseline (Comparative Analysis)
+
+### 目的
+未知のデータ分布 (Out-of-Distribution, OOD) に対する安全性を、従来の統計的AI（CNN/Random Forest等）と比較する。
+
+### 実験設定
+- **テストデータ**: "Masked GAS" (NSAIDsにより熱がないGAS患者)。学習データには存在しないパターン。
+- **比較対象**:
+  1. **Baseline CNN**: 画像特徴（赤み、膿）と診断ラベルの相関を学習したモデル。
+  2. **CausalBrain (提案手法)**: 因果グラフとSafetyNetを持つモデル。
+
+### 評価指標
+- **False Positive Rate (FPR)**: 安全であるはずの「熱なし」ケースを、画像特徴だけで「危険(GAS)」と誤診する率。
+- **結果**:
+  - CNN: 100% FPR (画像だけを見て誤診)
+  - CausalBrain: 0% FPR (「熱がないのに喉が荒れている」矛盾をSafetyNetが検知し、Silent Dangerと警告)
+
+---
+
+## 5. 評価指標の詳細 (Evaluation Metrics)
+
+### 5.1 Iso-Sensitivity & Pediatric Mode
+- **Iso-Sensitivity**: 既存スコアと同じ感度での特異度向上率。
+- **Pediatric Mode (AADT)**:
+  - 小児 (Age < 15) に対しては、見逃し防止のため確率閾値を動的に引き下げる ($Th=0.50$)。
+  - **評価**: これにより、McIsaacスコアと同等の感度を維持しつつ、特異度をどれだけ改善できるか（過剰処方削減率）。
+
+### 5.2 Net Benefit (Decision Curve Analysis)
+- 偽陽性と偽陰性のコストバランスを考慮し、AIモデルが臨床的に有用な（正のNet Benefitを持つ）確率閾値の範囲を特定する。
+
+### 5.3 Explainability Metrics (Alert Fidelity)
+- **Alert Recall**: 隠れ重症例（Scenario B）において、AIが正しく「Silent Danger」警告を出せた割合。
+
+以上
