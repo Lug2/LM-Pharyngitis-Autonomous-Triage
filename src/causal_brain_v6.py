@@ -219,6 +219,67 @@ class CausalBrainV6(CausalBrainLoader):
             
         return base_result
 
+    def screen_red_flags(self, evidence: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Symbolic Safety Layer (Red Flag Screening).
+        Checks for critical airway obstruction or abscess risk.
+        Logic based on Algorithm 1 (Symbolic Safety Layer Logic).
+        """
+        alerts = []
+        referral_reason = None
+        
+        # 1. Critical Airway Obstruction Risk
+        # "Trismus" OR "Drooling" (Dysphagia)
+        trismus = str(evidence.get('Trismus', 'Absent')) == 'Present'
+        drooling = str(evidence.get('Drooling', 'Absent')) == 'Present'
+        
+        if trismus or drooling:
+            referral_reason = "Suspected Epiglottitis (Airway Obstruction Risk)"
+            if trismus: alerts.append("⚠️ **CRITICAL**: Trismus (Lockjaw) detected.")
+            if drooling: alerts.append("⚠️ **CRITICAL**: Drooling / Dysphagia detected.")
+
+        # 2. Abscess Formation Risk
+        # "Unilateral severe pain" OR "Deviation of uvula"
+        uvula = str(evidence.get('Uvula_Dev', 'Absent')) == 'Present'
+        
+        # Check Unilateral Severe Pain: C_pain_lat='Unilateral' AND C_pain_sev='Severe'
+        # Need to handle mapped or unmapped keys
+        pain_lat = evidence.get('C_pain_lat', evidence.get('c_pain_lat', 'Bilateral'))
+        pain_sev = evidence.get('C_pain_sev', evidence.get('c_pain_sev', 'Mild'))
+        
+        unilateral_severe = (pain_lat == 'Unilateral') and (pain_sev == 'Severe')
+        
+        if not referral_reason and (unilateral_severe or uvula):
+            referral_reason = "Suspected Peritonsillar Abscess"
+            if uvula: alerts.append("⚠️ **CRITICAL**: Uvula Deviation detected.")
+            if unilateral_severe: alerts.append("⚠️ **CRITICAL**: Unilateral Severe swelling/pain detected.")
+            
+        if referral_reason:
+            return {
+                "diagnosis": "Immediate Referral",
+                "probability": 1.0,
+                "probs": {"Immediate Referral": 1.0},
+                "explanation": {
+                    "summary": f"**IMMEDIATE REFERRAL REQUIRED**: {referral_reason}",
+                    "positive": alerts,
+                    "negative": [],
+                    "alerts": alerts
+                },
+                "clinical_decision": {
+                    "decision": "Call Ambulance / Emergency Referral",
+                    "threshold_used": 0.0,
+                    "is_pediatric_mode": (evidence.get('Age_Group') == 'Child'),
+                    "logic": "Symbolic Safety Layer (Red Flags)"
+                },
+                "cognitive": { # Minimal dummy data for interface compatibility
+                    'conflict_score': 0.0,
+                    'prob_subjective': 1.0,
+                    'prob_objective': 1.0,
+                    'triage_type': "Pattern D: Red Flag (Critical)"
+                }
+            }
+        return None
+
     def diagnose(self, evidence: Dict[str, Any], enable_safety_net: bool = True) -> Dict[str, Any]:
         """
         Public API for diagnosis with Ablation Control.
@@ -228,6 +289,12 @@ class CausalBrainV6(CausalBrainLoader):
             enable_safety_net: If True, runs full Cognitive Inference (Conflict/SafetyNet).
                                If False, runs Base Bayesian Inference (No SafetyNet).
         """
+        # Step 0: Symbolic Safety Layer (Red Rules)
+        # Always active regardless of enable_safety_net (Basic Safety)
+        red_flag_result = self.screen_red_flags(evidence)
+        if red_flag_result:
+            return red_flag_result
+
         if enable_safety_net:
             return self.infer_cognitive(evidence)
         else:

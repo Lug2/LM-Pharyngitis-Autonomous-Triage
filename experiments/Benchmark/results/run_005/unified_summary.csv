@@ -1,0 +1,9 @@
+Metric,Value
+std_mc_sens,0.0
+std_ai_sens,0.0
+std_mc_spec,0.9591836734693877
+std_ai_spec,1.0
+std_p_value,0.47950012218695337
+pediatric_sens,0.0
+pediatric_spec,1.0
+standard_duration,26.56
