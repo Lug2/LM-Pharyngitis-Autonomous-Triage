@@ -1,0 +1,47 @@
+# Benchmark Logic & Algorithm Documentation
+
+This document summarizes the core logic used in the Neuro-Symbolic Triage Benchmark.
+
+## 1. Inference Engine (`CausalBrainV6`)
+The core reasoning engine uses a **Knowledge-Constrained Causal Bayesian Network**.
+- **Inference**: Variable Elimination.
+- **Probabilistic Model**: Defined in `model_config.yaml` (Nodes, States, CPTs).
+- **Features**:
+    - **AADT (Age-Adaptive Dynamic Thresholding)**:
+        - Adult: Threshold = 0.70
+        - Child: Threshold = 0.50 (To minimize false negatives in high-risk pediatric group)
+    - **Cognitive Conflict (Safety Net)**:
+        - Calculates divergence between **Subjective** (Patient History) and **Objective** (Physical Exam) probabilities.
+        - **Pattern C (Silent Danger)**: Triggers alert if Objective Probability >> Subjective Probability (Threshold: 0.419).
+
+## 2. Patient Simulation (`PatientGenerator`)
+Benchmarks rely on synthetic patients generated via **Ancestral Sampling** from the causal graph.
+- **Process**:
+    1. Sample root nodes (Season, Age, Epidemic).
+    2. Propagate values down the DAG based on CPTs.
+    3. Generate "ground truth" diagnosis.
+    4. Generate observations (symptoms).
+- **Leakage Model**: Small probability of random noise added to simulate imperfect reporting.
+
+## 3. Benchmark Tasks (`runner.py`)
+
+### A. Standard Benchmark (`--task standard`)
+- **N=1000** samples.
+- **Metrics**:
+    - **Sensitivity**: Recall (True Positive Rate).
+    - **Specificity**: True Negative Rate.
+    - **Note**: Metrics are calculated separately for Adults and Children to verify AADT.
+
+### B. Stress Test (`--task stress`)
+- Evaluates robustness by injecting **random noise** (flipping observation bits).
+- **Range**: 0.0 to 0.5 (Flip Probability).
+- **Metric**: Performance Degradation Rate (PDR).
+
+### C. Ablation Study (`--task ablation`)
+- Evaluates the contribution of the **Safety Net (Cognitive Conflict)**.
+- **Scenario**: Conflicting evidence (e.g., Hidden bacteria masked by NSAIDs).
+- **Comparison**: Full Model vs. Base Model (No Conflict Detection).
+
+## 4. Source of Truth
+- **Code**: `src/causal_brain_v6.py`
+- **Config**: `src/model_config.yaml`
