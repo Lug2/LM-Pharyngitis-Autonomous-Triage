@@ -106,6 +106,8 @@ cython_debug/
 *.onnx
 # Keep specific small models or placeholders if needed
 !yolov8s-seg.pt
+!models/best.pt
+
 
 # IDEs
 .vscode/
