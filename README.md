@@ -1,6 +1,6 @@
 # Neuro-Symbolic-Pharyngitis-Triage
 Thank you for your interest in our research paper.
-This repository contains the official implementation of **"From Black-Box to Glass-Box: A Knowledge-Constrained Neuro-Symbolic Approach to Medical Triage under Data Scarcity"**, which has published as a preprint on Research Square, here is the doi: https://doi.org/10.21203/rs.3.rs-8522643/v1
+This repository contains the official implementation of **"From Black-Box to Glass-Box: Knowledge-Constrained Neuro-Symbolic Acute Pharyngitis Triage under Data Scarcity"**, which has published as a preprint on Research Square, here is the doi: https://doi.org/10.21203/rs.3.rs-8522643/v1
 The system combines deep learning (YOLOv8) for image analysis with a causal Bayesian network for diagnostic reasoning, providing explainable and age-adaptive clinical decision support.
 
 ## 🚀 Quick Start (Google Colab)
@@ -67,7 +67,7 @@ If you want to reach the corresponding author, please refer to the paper.
 
 # 咽頭炎トリアージのためのニューロシンボリックAI
 閲覧いただきありがとうございます。
-本リポジトリは、**「From Black-Box to Glass-Box: A Knowledge-Constrained Neuro-Symbolic Approach to Medical Triage under Data Scarcity」** の公式実装です。Reseach Squareでプレプリントとして公開されました。リンクはこちら: https://doi.org/10.21203/rs.3.rs-8522643/v1
+本リポジトリは、**「From Black-Box to Glass-Box: Knowledge-Constrained Neuro-Symbolic Acute Pharyngitis Triage under Data Scarcity」** の公式実装です。Reseach Squareでプレプリントとして公開されました。リンクはこちら: https://doi.org/10.21203/rs.3.rs-8522643/v1
 深層学習(YOLOv8)による画像解析と、因果ベイジアンネットワークによる推論を組み合わせ、説明可能で年齢に適応した臨床意思決定支援を提供します。
 
 ## 🚀 クイックスタート (Google Colab)
